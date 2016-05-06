@@ -10,6 +10,7 @@ public class Alarm {
     private double longitude;
     private int radius;
     private boolean status;
+    private String destination;
 
     public void setId(int id) {
         this.id = id;
@@ -31,6 +32,10 @@ public class Alarm {
         this.status = status;
     }
 
+    public void setDestination(String destination) {
+        this.destination = destination;
+    }
+
     public int getId() {
         return id;
     }
@@ -48,5 +53,9 @@ public class Alarm {
     }
     public boolean getStatus(){
         return status;
+    }
+
+    public String getDestination() {
+        return destination;
     }
 }
