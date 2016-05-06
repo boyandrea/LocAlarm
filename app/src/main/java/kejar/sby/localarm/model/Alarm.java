@@ -5,5 +5,48 @@ package kejar.sby.localarm.model;
  */
 public class Alarm {
 
+    private int id;
+    private double latitude;
+    private double longitude;
+    private int radius;
+    private boolean status;
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
+    public void setRadius(int radius) {
+        this.radius = radius;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public int getRadius() {
+        return radius;
+    }
+    public boolean getStatus(){
+        return status;
+    }
 }
