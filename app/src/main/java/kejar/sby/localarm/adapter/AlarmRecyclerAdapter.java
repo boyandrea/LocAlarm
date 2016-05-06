@@ -3,9 +3,11 @@ package kejar.sby.localarm.adapter;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SwitchCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -35,11 +37,21 @@ public class AlarmRecyclerAdapter extends RecyclerView.Adapter<AlarmRecyclerAdap
 
     @Override
     public void onBindViewHolder(AlarmViewHolder holder, int position) {
-        Alarm alarmItem = listAlarm.get(position);
+        final Alarm alarmItem = listAlarm.get(position);
         holder.txtDestination.setText(alarmItem.getDestination());
         holder.txtRadius.setText("Radius "+alarmItem.getRadius()+" Km");
+        holder.switchAlarm.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    Log.e("Switch",alarmItem.getId()+" is ON");
+                }else {
+                    Log.e("Switch",alarmItem.getId()+" is OFF");
+                }
+            }
+        });
         if(alarmItem.getStatus()){
-            holder.switchAlarm.setActivated(true);
+            holder.switchAlarm.setChecked(true);
         }
     }
 
