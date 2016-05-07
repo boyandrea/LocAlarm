@@ -1,6 +1,9 @@
 package kejar.sby.localarm.adapter;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
@@ -15,6 +18,8 @@ import java.util.ArrayList;
 import kejar.sby.localarm.R;
 import kejar.sby.localarm.model.Alarm;
 import kejar.sby.localarm.util.AlarmDatabase;
+import kejar.sby.localarm.util.Constanta;
+import kejar.sby.localarm.util.LocationBroadcastReceiver;
 
 /**
  * Created by Irfan Septiadi Putra on 06/05/2016.
@@ -25,11 +30,14 @@ public class AlarmRecyclerAdapter extends RecyclerView.Adapter<AlarmRecyclerAdap
     private ArrayList<Alarm> listAlarm;
     private Context mContext;
     private AlarmDatabase alarmDatabase;
+    LocationBroadcastReceiver bcReceiver;
 
-    public AlarmRecyclerAdapter(Context mContext){
-        this.mContext = mContext;
+    public AlarmRecyclerAdapter(Context context){
+        this.mContext = context;
         alarmDatabase = new AlarmDatabase(mContext);
-        this.listAlarm = alarmDatabase.getListAlarm() ;
+        this.listAlarm = alarmDatabase.getListAlarm();
+        bcReceiver = new LocationBroadcastReceiver();
+        LocalBroadcastManager.getInstance(mContext).registerReceiver(bcReceiver,new IntentFilter(Constanta.ACTION_GEOFIRE_NEW));
     }
 
     @Override
@@ -56,6 +64,7 @@ public class AlarmRecyclerAdapter extends RecyclerView.Adapter<AlarmRecyclerAdap
                 if(isChecked){
                     Log.e("Switch",alarmItem.getId()+" is ON");
                     alarmDatabase.setStatus(alarmItem.getId(),1);
+                    setGeoQuery(alarmItem);
                 }else {
                     Log.e("Switch",alarmItem.getId()+" is OFF");
                     alarmDatabase.setStatus(alarmItem.getId(),0);
@@ -63,6 +72,17 @@ public class AlarmRecyclerAdapter extends RecyclerView.Adapter<AlarmRecyclerAdap
             }
         });
     }
+
+    public void setGeoQuery(Alarm myAlarm){
+        Intent intent = new Intent();
+        intent.setAction(Constanta.ACTION_GEOFIRE_NEW);
+        intent.putExtra("id",myAlarm.getId());
+        intent.putExtra("latitude",myAlarm.getLatitude());
+        intent.putExtra("longitude",myAlarm.getLongitude());
+        intent.putExtra("radius",myAlarm.getRadius());
+        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+    }
+
 
     @Override
     public int getItemCount() {
