@@ -76,7 +76,7 @@ public class AlarmRecyclerAdapter extends RecyclerView.Adapter<AlarmRecyclerAdap
     public void setGeoQuery(Alarm myAlarm){
         Intent intent = new Intent();
         intent.setAction(Constanta.ACTION_GEOFIRE_NEW);
-        intent.putExtra("id",myAlarm.getId());
+        intent.putExtra("destination",myAlarm.getDestination());
         intent.putExtra("latitude",myAlarm.getLatitude());
         intent.putExtra("longitude",myAlarm.getLongitude());
         intent.putExtra("radius",myAlarm.getRadius());

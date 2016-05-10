@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.media.MediaPlayer;
+import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -14,6 +16,9 @@ import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
+import com.firebase.geofire.LocationCallback;
+
+import java.util.ArrayList;
 
 /**
  * Created by Irfan Septiadi Putra on 06/05/2016.
@@ -22,48 +27,79 @@ public class LocationBroadcastReceiver extends BroadcastReceiver {
 
     double latitude, longitude;
     int radius;
-    int id_alarm;
+    String dest;
     private GeoFire geoFire;
     private GeoQuery geoQuery;
+    ArrayList<String> destination = new ArrayList<String>();
+    AlarmDatabase alarmDatabase;
+    MediaPlayer player;
 
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.w("Broadcast","New broadcast "+intent.getAction());
+        alarmDatabase = new AlarmDatabase(context);
+        destination = alarmDatabase.getListActiveAlarm();
+        geoFire = new GeoFire(new Firebase(Constanta.FIREBASE_URL+"irfan"));
         if(intent.getAction().equals(Constanta.ACTION_LOCATION)){
             latitude = intent.getDoubleExtra("latitude",-1);
             longitude = intent.getDoubleExtra("longitude",-1);
             sendToGeoFire(latitude,longitude);
         }else if(intent.getAction().equals(Constanta.ACTION_GEOFIRE_NEW)){
-            id_alarm = intent.getIntExtra("id",1);
+            dest = intent.getStringExtra("destination");
             latitude = intent.getDoubleExtra("latitude",-1);
             longitude = intent.getDoubleExtra("longitude",-1);
             radius = intent.getIntExtra("radius",0);
-            setGeoQuery(latitude,longitude,radius,id_alarm,context);
+            Log.e("Set GeoFire",dest+" "+latitude+" "+longitude+" "+radius);
+            setGeoQuery(latitude,longitude,radius,dest,context);
         }else if(intent.getAction().equals(Constanta.ACTION_GEOFIRE_ENTERED)){
             Toast.makeText(context,"Sudah Sampai",Toast.LENGTH_LONG).show();
+            playAlarm(context);
+        }
+    }
+
+    private void playAlarm(Context context){
+        player = MediaPlayer.create(context,Settings.System.DEFAULT_RINGTONE_URI);
+        player.start();
+    }
+
+    private void sendToGeoFire(double latitude, double longitude) {
+        for (int i=0; i<destination.size();i++){
+            getLocation(destination.get(i));
+            geoFire.setLocation(destination.get(i), new GeoLocation(latitude,longitude), new GeoFire.CompletionListener() {
+                @Override
+                public void onComplete(String key, FirebaseError error) {
+                    if (error != null) {
+                        System.err.println("There was an error saving the location to GeoFire: " + error);
+                    } else {
+                        //System.out.println("Location saved on server successfully!");
+                    }
+                }
+            });
         }
 
     }
 
-    private void sendToGeoFire(double latitude, double longitude) {
-        geoFire = new GeoFire(new Firebase(Constanta.FIREBASE_URL));
-        geoFire.setLocation("set-location/irfan/1", new GeoLocation(latitude, longitude), new GeoFire.CompletionListener() {
+    private boolean getLocation(String key){
+        geoFire.getLocation(key, new LocationCallback() {
             @Override
-            public void onComplete(String key, FirebaseError error) {
-                if(error != null){
-                    Log.e("Send Location","Gagal...");
+            public void onLocationResult(String key, GeoLocation location) {
+                if(location != null){
+                   Log.w("GetLocation",(String.format("The location for key %s is [%f,%f]", key, location.latitude, location.longitude)));
                 }else{
-                    Log.e("Send Location","Sukses...");
-
+                    Log.w("GetLocation",(String.format("There is no location for key %s in GeoFire", key)));
                 }
             }
+
+            @Override
+            public void onCancelled(FirebaseError firebaseError) {
+
+            }
         });
+        return true;
     }
 
-    public void setGeoQuery(double lat,double lon, int radius, int id, final Context ctx) {
-        geoFire = new GeoFire(new Firebase(Constanta.FIREBASE_URL+"/set-location/irfan/"+id));
-        GeoQuery  geoQuery = geoFire.queryAtLocation(new GeoLocation(lat,lon),radius);
+    public void setGeoQuery(double lat,double lon, int radius,String destination, final Context ctx) {
+        geoQuery = geoFire.queryAtLocation(new GeoLocation(lat,lon),radius);
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
             @Override
             public void onKeyEntered(String key, GeoLocation myLocation) {

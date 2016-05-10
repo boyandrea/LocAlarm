@@ -105,6 +105,21 @@ public class AlarmDatabase extends SQLiteOpenHelper {
         return list;
     }
 
+    public ArrayList<String> getListActiveAlarm (){
+        ArrayList<String> list = new ArrayList<String>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT "+ALARM_DESTINATION+" FROM "+TABEL_ALARM+" WHERE "+ALARM_STATUS+"="+1;
+        Cursor cursor = db.rawQuery(query,null);
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            String destination = cursor.getString(cursor.getColumnIndex(ALARM_DESTINATION));
+            list.add(destination);
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return list;
+    }
+
     public boolean setStatus(int id,int status){
         SQLiteDatabase db = this.getWritableDatabase();
         String[] args = { new Integer(status).toString() };
