@@ -56,6 +56,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private AlarmRecyclerAdapter alarmAdapter;
     LocAlarmService alarmService;
     LocationBroadcastReceiver lbsReceiver;
+    ArrayList<Alarm> alarms = new ArrayList<Alarm>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +67,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         alarmRecycler = (RecyclerView) findViewById(R.id.list_alarm);
         btnAddAlarm = (FloatingActionButton) findViewById(R.id.btnAddAlarm);
         btnAddAlarm.setOnClickListener(this);
-        setupListAlarm();
         setupToolbar();
         mGoogleApiClient = new GoogleApiClient
                 .Builder(this)
@@ -78,6 +79,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         registerReceiver(lbsReceiver,new IntentFilter(Constanta.ACTION_LOCATION));
         registerReceiver(lbsReceiver,new IntentFilter(Constanta.ACTION_GEOFIRE_NEW));
         registerReceiver(lbsReceiver,new IntentFilter(Constanta.ACTION_GEOFIRE_REMOVE));
+
+        if(alarms.size() != 0){
+            alarms.clear();
+        }
+        alarms = alarmDB.getListAlarm();
+        setupListAlarm();
+
     }
 
     @Override
@@ -93,7 +101,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void setupListAlarm(){
-        alarmAdapter = new AlarmRecyclerAdapter(this);
+        if(alarms.size() != 0){
+            alarms.clear();
+        }
+        alarms = alarmDB.getListAlarm();
+        alarmAdapter = new AlarmRecyclerAdapter(this,alarms);
         alarmRecycler.setHasFixedSize(true);
         alarmRecycler.setAdapter(alarmAdapter);
         alarmRecycler.setLayoutManager(new LinearLayoutManager(this));
@@ -161,10 +173,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Intent intent = new Intent();
                 intent.setAction(Constanta.ACTION_GEOFIRE_NEW);
                 intent.putExtra("id",myAlarm.getId());
+                intent.putExtra("destination",myAlarm.getDestination());
                 intent.putExtra("latitude",myAlarm.getLatitude());
                 intent.putExtra("longitude",myAlarm.getLongitude());
                 intent.putExtra("radius",myAlarm.getRadius());
                 sendBroadcast(intent);
+                setupListAlarm();
 
             }
         });

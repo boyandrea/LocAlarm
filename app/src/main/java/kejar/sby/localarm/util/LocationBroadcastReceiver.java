@@ -34,12 +34,15 @@ public class LocationBroadcastReceiver extends BroadcastReceiver {
     AlarmDatabase alarmDatabase;
     MediaPlayer player;
 
-
     @Override
     public void onReceive(Context context, Intent intent) {
         alarmDatabase = new AlarmDatabase(context);
         destination = alarmDatabase.getListActiveAlarm();
         geoFire = new GeoFire(new Firebase(Constanta.FIREBASE_URL+"irfan"));
+        if(player == null){
+            player = MediaPlayer.create(context,Settings.System.DEFAULT_RINGTONE_URI);
+        }
+        Log.e("New Broadcast",intent.getAction());
         if(intent.getAction().equals(Constanta.ACTION_LOCATION)){
             latitude = intent.getDoubleExtra("latitude",-1);
             longitude = intent.getDoubleExtra("longitude",-1);
@@ -51,15 +54,28 @@ public class LocationBroadcastReceiver extends BroadcastReceiver {
             radius = intent.getIntExtra("radius",0);
             Log.e("Set GeoFire",dest+" "+latitude+" "+longitude+" "+radius);
             setGeoQuery(latitude,longitude,radius,dest,context);
-        }else if(intent.getAction().equals(Constanta.ACTION_GEOFIRE_ENTERED)){
-            Toast.makeText(context,"Sudah Sampai",Toast.LENGTH_LONG).show();
-            playAlarm(context);
+        }else if(intent.getAction().equals(Constanta.ACTION_GEOFIRE_REMOVE)){
+            try{
+                if(player.isPlaying()){
+                    stopAlarm();
+                    String stopDest = intent.getStringExtra("destination");
+                    geoFire.removeLocation(stopDest);
+                }else{
+                    String stopDest = intent.getStringExtra("destination");
+                    geoFire.removeLocation(stopDest);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+                Toast.makeText(context,"Gagal mematikan alarm",Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
-    private void playAlarm(Context context){
-        player = MediaPlayer.create(context,Settings.System.DEFAULT_RINGTONE_URI);
+    private void playAlarm(){
         player.start();
+    }
+    private void stopAlarm() {
+        player.stop();
     }
 
     private void sendToGeoFire(double latitude, double longitude) {
@@ -104,12 +120,15 @@ public class LocationBroadcastReceiver extends BroadcastReceiver {
             @Override
             public void onKeyEntered(String key, GeoLocation myLocation) {
                 Log.w("GeoFire", (String.format("Key %s entered the search area at [%f,%f]", key, myLocation.latitude, myLocation.longitude)));
-                Toast.makeText(ctx,"Sudah Sampai",Toast.LENGTH_LONG).show();
+                Toast.makeText(ctx,"Sudah Sampai di "+key+"\n Matikan alarm dengan menggeser switch",Toast.LENGTH_SHORT).show();
+                playAlarm();
             }
 
             @Override
             public void onKeyExited(String key) {
                 Log.w("GeoFire", (String.format("Key %s is no longer in the search area", key)));
+                //Toast.makeText(ctx,"Anda sudah berada diluar area "+key,Toast.LENGTH_LONG).show();
+                stopAlarm();
             }
 
             @Override

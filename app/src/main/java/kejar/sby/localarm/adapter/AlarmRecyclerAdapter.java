@@ -32,12 +32,14 @@ public class AlarmRecyclerAdapter extends RecyclerView.Adapter<AlarmRecyclerAdap
     private AlarmDatabase alarmDatabase;
     LocationBroadcastReceiver bcReceiver;
 
-    public AlarmRecyclerAdapter(Context context){
+    public AlarmRecyclerAdapter(Context context,ArrayList<Alarm> list){
         this.mContext = context;
         alarmDatabase = new AlarmDatabase(mContext);
-        this.listAlarm = alarmDatabase.getListAlarm();
+        this.listAlarm = list;
         bcReceiver = new LocationBroadcastReceiver();
-        LocalBroadcastManager.getInstance(mContext).registerReceiver(bcReceiver,new IntentFilter(Constanta.ACTION_GEOFIRE_NEW));
+        IntentFilter intentFilter = new IntentFilter(Constanta.ACTION_GEOFIRE_NEW);
+        intentFilter.addAction(Constanta.ACTION_GEOFIRE_REMOVE);
+        LocalBroadcastManager.getInstance(mContext).registerReceiver(bcReceiver,intentFilter);
     }
 
     @Override
@@ -54,6 +56,7 @@ public class AlarmRecyclerAdapter extends RecyclerView.Adapter<AlarmRecyclerAdap
         Log.e("Status",""+alarmItem.getStatus());
         if(alarmItem.getStatus() == 1){
             holder.switchAlarm.setChecked(true);
+            setGeoQuery(alarmItem);
         }else{
             holder.switchAlarm.setChecked(false);
         }
@@ -68,6 +71,7 @@ public class AlarmRecyclerAdapter extends RecyclerView.Adapter<AlarmRecyclerAdap
                 }else {
                     Log.e("Switch",alarmItem.getId()+" is OFF");
                     alarmDatabase.setStatus(alarmItem.getId(),0);
+                    setAlarmOff(alarmItem);
                 }
             }
         });
@@ -76,6 +80,18 @@ public class AlarmRecyclerAdapter extends RecyclerView.Adapter<AlarmRecyclerAdap
     public void setGeoQuery(Alarm myAlarm){
         Intent intent = new Intent();
         intent.setAction(Constanta.ACTION_GEOFIRE_NEW);
+        intent.putExtra("id",myAlarm.getId());
+        intent.putExtra("destination",myAlarm.getDestination());
+        intent.putExtra("latitude",myAlarm.getLatitude());
+        intent.putExtra("longitude",myAlarm.getLongitude());
+        intent.putExtra("radius",myAlarm.getRadius());
+        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+    }
+
+    private void setAlarmOff(Alarm myAlarm){
+        Intent intent = new Intent();
+        intent.setAction(Constanta.ACTION_GEOFIRE_REMOVE);
+        intent.putExtra("id",myAlarm.getId());
         intent.putExtra("destination",myAlarm.getDestination());
         intent.putExtra("latitude",myAlarm.getLatitude());
         intent.putExtra("longitude",myAlarm.getLongitude());
