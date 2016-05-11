@@ -76,6 +76,7 @@ public class LocationBroadcastReceiver extends BroadcastReceiver {
     }
     private void stopAlarm() {
         player.stop();
+        player.release();
     }
 
     private void sendToGeoFire(double latitude, double longitude) {
